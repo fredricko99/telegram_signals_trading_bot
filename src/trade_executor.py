@@ -69,7 +69,67 @@ class Trade_Executor:
             logging.exception(f"❌ Error selecting symbol {symbol}: {e}")
             return False
 
+    def _get_price(self, symbol):
+            """Helper to get current Ask/Bid prices for a symbol."""
+            try:
+                if not self.ensure_symbol(symbol):
+                    return None, None
+                    
+                tick = mt5.symbol_info_tick(symbol)
+                if tick is None:# or tick.last == 0.0:
+                    logging.error(f"❌ Failed to get valid tick data for {symbol}.")
+                    return None, None
+                    
+                return tick.ask, tick.bid
+            except Exception as e:
+                logging.exception(f"❌ Exception retrieving price for {symbol}: {e}")
+                return None, None
 
+    # ---------------------------------------------------------
+    # CORE EXECUTION METHOD
+    # ---------------------------------------------------------
+    def execute_signal(self, parsed_signal):
+        """
+        Processes a parsed signal and executes the corresponding market order.
+        :param parsed_signal: Dictionary containing 'symbol', 'action', 'stop_loss', etc.
+        """
+        symbol = parsed_signal.get("symbol")
+        action = parsed_signal.get("action")
+        # NOTE: You MUST calculate or fetch the lot size from your risk management settings
+        qty = 0.01  # LOW LOT EXAMPLE: Replace with your calculated lot size
+        sl = parsed_signal.get("stop_loss", 0.0)
+        tp = parsed_signal.get("take_profit_1", 0.0) # Assuming TP1 is the entry TP
+        
+        if not symbol or not action:
+            logging.error("🚨 Signal missing Symbol or Action. Execution skipped.")
+            return {"status": "error", "msg": "Incomplete signal data"}
+
+        # 1. Get current market prices
+        ask, bid = self._get_price(symbol)
+        if ask is None or bid is None:
+            return {"status": "error", "msg": f"Could not get valid price for {symbol}"}
+        
+        # 2. Determine Order Type and Entry Price
+        if action == "BUY":
+            order_type = mt5.ORDER_TYPE_BUY
+            price = ask  # Buy orders fill at the ASK price
+            logging.info(f"Preparing BUY order at ASK={ask}")
+        elif action == "SELL":
+            order_type = mt5.ORDER_TYPE_SELL
+            price = bid  # Sell orders fill at the BID price
+            logging.info(f"Preparing SELL order at BID={bid}")
+        else:
+            logging.error(f"⚠️ Unsupported action: {action}")
+            return {"status": "error", "msg": f"Unsupported action: {action}"}
+
+        # 3. Adjust Filling Mode (Recommended Fix)
+        # The 'ORDER_FILLING_IOC' in your create_order often causes errors.
+        # Change the filling mode to FOK or RETURN for better compatibility.
+        # NOTE: You must update the create_order method's default filling type.
+        
+        # 4. Execute Order
+        # The create_order method is called with all the necessary parameters
+        return self.create_order(symbol, qty, order_type, price, sl, tp)
     # ---------------------------------------------------------
     # ORDER CREATION
     # ---------------------------------------------------------
@@ -89,18 +149,19 @@ class Trade_Executor:
 
         # Build order request
         request = {
-            "action": mt5.TRADE_ACTION_DEAL,
-            "symbol": symbol,
-            "volume": qty,
-            "type": order_type,
-            "price": price,
-            "sl": sl,
-            "tp": tp,
-            "magic": self.magic,
-            "type_time": mt5.ORDER_TIME_GTC,
-            "type_filling": mt5.ORDER_FILLING_IOC,
-            "comment": "python-open-position"
-        }
+                    "action": mt5.TRADE_ACTION_DEAL,
+                    "symbol": symbol,
+                    "volume": qty,
+                    "type": order_type,
+                    "price": price,
+                    "sl": sl,
+                    "tp": tp,
+                    "magic": self.magic,
+                    "type_time": mt5.ORDER_TIME_GTC,
+                    # FIX: Changed from IOC to FOK (Fill or Kill) for market execution reliability
+                    "type_filling": mt5.ORDER_FILLING_FOK, 
+                    "comment": "python-open-position"
+                }
 
         logging.info(f"📤 Sending order request: {request}")
 
@@ -125,7 +186,8 @@ class Trade_Executor:
             logging.info(
                 f"✅ ORDER SUCCESS → order_id={result.order}, price={price}, sl={sl}, tp={tp}"
             )
-
+            print(f"✅ ORDER SUCCESS → order_id={result.order}, price={price}, sl={sl}, tp={tp}")
+            
             return {
                 "status": "success",
                 "order_id": result.order,

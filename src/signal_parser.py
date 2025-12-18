@@ -71,7 +71,7 @@ class SignalParser:
             "symbol": symbol,
             "action": action,
             "entry_type": entry_type,
-            "entry_price": entry_price, # <-- NEW FIELD
+            "entry_price": entry_price,
             "stop_loss": sl,
             "take_profit_1": tps[0] if len(tps) > 0 else None,
             "take_profit_2": tps[1] if len(tps) > 1 else None,

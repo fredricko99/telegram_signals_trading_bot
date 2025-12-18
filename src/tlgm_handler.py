@@ -7,12 +7,7 @@ from .signal_parser import SignalParser
 # ---------------------------------------------------------
 # Logging Configuration
 # ---------------------------------------------------------
-logging.basicConfig(
-    filename="logs/trade_executor.log",
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s"
-)
-
+logger = logging.getLogger('TELEGRAM_HANDLER')
 
 load_dotenv()
 
@@ -32,6 +27,7 @@ class TelegramHandler:
         # Validate before creating client
         if not self.channels:
             print("❌ ERROR: No channels found. Cannot start Telegram client.")
+            logger.error('❌ ERROR: No channels found. Cannot start Telegram client.')
             self.client = None
             return
         
@@ -51,6 +47,7 @@ class TelegramHandler:
                 data = json.load(f)
                 channels = data.get("channels", [])
                 print(f"📌 Loaded {len(channels)} channel(s) from JSON.")
+                logger.info(f"📌 Loaded {len(channels)} channel(s) from JSON.")
                 return channels
         except FileNotFoundError:
             print(f"❌ channel file not found: {self.channels_path}")
@@ -75,6 +72,7 @@ class TelegramHandler:
 
         if parsed and parsed.get("symbol") and parsed.get("action"):
                     print("📌 Parsed Signal:")
+                    logger.info(' Parsed Signal...')
                     print(json.dumps(parsed, indent=4))
                     
                     # 🟢 NEW: Trigger the Trade_Executor
@@ -87,6 +85,7 @@ class TelegramHandler:
                         if trade_result.get("status") == "success":
                             await event.respond(f"✅ TRADE EXECUTED: {parsed['action']} {parsed['symbol']} (Order: {trade_result['order_id']})")
                             print((f"✅ TRADE EXECUTED: {parsed['action']} {parsed['symbol']} (Order: {trade_result['order_id']})"))
+                            logger.info(f"✅ TRADE EXECUTED: {parsed['action']} {parsed['symbol']} (Order: {trade_result['order_id']})")
                         else:
                             await event.respond(f"❌ TRADE FAILED: {parsed['action']} {parsed['symbol']} ({trade_result.get('comment', trade_result.get('msg', 'Check logs for details.'))})")
                     else:

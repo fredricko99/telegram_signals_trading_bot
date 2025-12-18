@@ -2,9 +2,13 @@ import os
 import asyncio
 from dotenv import load_dotenv
 
-# 1. Import Handlers and Parsers from your source directory (src)
+#Import Handlers and Parsers from your source directory (src)
 from src.tlgm_handler import TelegramHandler
 from src.trade_executor import Trade_Executor 
+
+#set up the logger
+from config.logging_config import setup_logging
+setup_logging()
 
 async def main():
     # Load environment variables from .env file
@@ -15,9 +19,10 @@ async def main():
     api_hash = os.getenv("TELEGRAM_API_HASH")
     session = os.getenv("TELEGRAM_SESSION")
     
-    mt5_account = os.getenv('Mt5_ACCOUNT')
-    mt5_password = os.getenv('MT5_PASSWORD')
-    mt5_server = os.getenv('MT5_SERVER')
+    mt5_account = os.getenv('MT5_A')
+    mt5_password = os.getenv('MT5_A_PASSWORD')
+    mt5_server = os.getenv('MT5_A_SERVER')
+    mt5_A_path = os.getenv('MT5_A_PATH')
     
     if not (api_id and api_hash):
         print("❌ ERROR: TELEGRAM_API_ID or TELEGRAM_API_HASH not found in environment variables.")
@@ -28,7 +33,8 @@ async def main():
     executor = Trade_Executor(
         login=int(mt5_account),
         password=mt5_password,
-        server=mt5_server
+        server=mt5_server,
+        path= mt5_A_path
     )
     if not executor.initialize_mt5():
         print("❌ CRITICAL: Could not initialize MetaTrader 5 connection. Exiting.")

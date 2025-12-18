@@ -3,14 +3,11 @@ import time
 import logging
 from datetime import datetime
 
+
 # ---------------------------------------------------------
 # Logging Configuration
 # ---------------------------------------------------------
-logging.basicConfig(
-    filename="logs/trade_executor.log",
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s"
-)
+logger = logging.getLogger('EXECUTOR')
 
 
 class Trade_Executor:
@@ -31,11 +28,13 @@ class Trade_Executor:
     # ---------------------------------------------------------
     def initialize_mt5(self):
         """Initialize MT5 terminal with full logging & error handling."""
-        logging.info("Attempting to initialize MetaTrader 5...")
+        logger.info("Attempting to initialize MetaTrader 5...")
+        print('Attempting to initialize MetaTrader 5..."')
 
         # If MT5 is already running
         if mt5.terminal_info() is not None:
-            logging.info("MT5 terminal already connected.")
+            logger.info("MT5 terminal already connected.")
+            print("MT5 terminal already connected.")
             return True
 
         # Try to initialize
@@ -43,15 +42,17 @@ class Trade_Executor:
             login=self.login,
             password=self.password,
             server=self.server,
-            #path=self.path
+            path=self.path
         ):
             acc = mt5.account_info()
-            logging.info(f"✅ MT5 initialized successfully. Logged in as: {acc.login}")
+            logger.info(f"✅ MT5 initialized successfully. Logged in as: {acc.login}")
+            print(f"✅ MT5 initialized successfully. Logged in as: {acc.login}")
             return True
         
         else:
             error = mt5.last_error()
-            logging.error(f"❌ MT5 initialization failed: {error}")
+            logger.error(f"❌ MT5 initialization failed: {error}")
+            print(f"❌ MT5 initialization failed: {error}")
             return False
 
 
@@ -61,12 +62,13 @@ class Trade_Executor:
     def ensure_symbol(self, symbol):
         """Ensure the symbol is available and selected in MT5."""
         try:
-            if not mt5.symbol_select(symbol, True):
-                logging.error(f"❌ Could not select symbol: {symbol}")
+            selected = mt5.symbol_select(symbol, True)
+            if not selected:
+                logger.error(f"❌ Could not select symbol: {symbol}")
                 return False
-            return True
+            return selected
         except Exception as e:
-            logging.exception(f"❌ Error selecting symbol {symbol}: {e}")
+            logger.exception(f"❌ Error selecting symbol {symbol}: {e}")
             return False
 
     def _get_price(self, symbol):
@@ -76,13 +78,15 @@ class Trade_Executor:
                     return None, None
                     
                 tick = mt5.symbol_info_tick(symbol)
+                print(tick)
                 if tick is None:# or tick.last == 0.0:
-                    logging.error(f"❌ Failed to get valid tick data for {symbol}.")
+                    logger.error(f"❌ Failed to get valid tick data for {symbol}.")
+                    print(mt5.last_error())
                     return None, None
                     
                 return tick.ask, tick.bid
             except Exception as e:
-                logging.exception(f"❌ Exception retrieving price for {symbol}: {e}")
+                logger.exception(f"❌ Exception retrieving price for {symbol}: {e}")
                 return None, None
 
     # ---------------------------------------------------------
@@ -96,12 +100,13 @@ class Trade_Executor:
         symbol = parsed_signal.get("symbol")
         action = parsed_signal.get("action")
         # NOTE: You MUST calculate or fetch the lot size from your risk management settings
+        #TODO: calculate the risk management. 
         qty = 0.01  # LOW LOT EXAMPLE: Replace with your calculated lot size
         sl = parsed_signal.get("stop_loss", 0.0)
         tp = parsed_signal.get("take_profit_1", 0.0) # Assuming TP1 is the entry TP
         
         if not symbol or not action:
-            logging.error("🚨 Signal missing Symbol or Action. Execution skipped.")
+            logger.error("🚨 Signal missing Symbol or Action. Execution skipped.")
             return {"status": "error", "msg": "Incomplete signal data"}
 
         # 1. Get current market prices
@@ -119,7 +124,7 @@ class Trade_Executor:
             price = bid  # Sell orders fill at the BID price
             logging.info(f"Preparing SELL order at BID={bid}")
         else:
-            logging.error(f"⚠️ Unsupported action: {action}")
+            logger.error(f"⚠️ Unsupported action: {action}")
             return {"status": "error", "msg": f"Unsupported action: {action}"}
 
         # 3. Adjust Filling Mode (Recommended Fix)
@@ -140,7 +145,7 @@ class Trade_Executor:
 
         # Ensure MT5 is running
         if not mt5.terminal_info():
-            logging.error("❌ MT5 not initialized. Call initialize_mt5() first.")
+            logger.error("❌ MT5 not initialized. Call initialize_mt5() first.")
             return {"status": "error", "msg": "MT5 not initialized"}
 
         # Ensure symbol exists
@@ -163,18 +168,18 @@ class Trade_Executor:
                     "comment": "python-open-position"
                 }
 
-        logging.info(f"📤 Sending order request: {request}")
+        logger.info(f"📤 Sending order request: {request}")
 
         try:
             result = mt5.order_send(request)
 
             if result is None:
-                logging.error("❌ order_send returned None")
+                logger.error("❌ order_send returned None")
                 return {"status": "error", "msg": "order_send returned None"}
 
             # Check MT5 execution response
             if result.retcode != mt5.TRADE_RETCODE_DONE:
-                logging.error(
+                logger.error(
                     f"❌ ORDER FAILED → retcode={result.retcode}, comment={result.comment}"
                 )
                 return {
@@ -183,7 +188,7 @@ class Trade_Executor:
                     "comment": result.comment
                 }
 
-            logging.info(
+            logger.info(
                 f"✅ ORDER SUCCESS → order_id={result.order}, price={price}, sl={sl}, tp={tp}"
             )
             print(f"✅ ORDER SUCCESS → order_id={result.order}, price={price}, sl={sl}, tp={tp}")
@@ -197,7 +202,7 @@ class Trade_Executor:
             }
 
         except Exception as e:
-            logging.exception(f"❌ Exception during order_send: {e}")
+            logger.exception(f"❌ Exception during order_send: {e}")
             return {"status": "exception", "msg": str(e)}
 
 
@@ -208,6 +213,6 @@ class Trade_Executor:
         """Safely shutdown the MT5 terminal."""
         try:
             mt5.shutdown()
-            logging.info("🔌 MT5 terminal successfully shut down.")
+            logger.info("🔌 MT5 terminal successfully shut down.")
         except Exception as e:
-            logging.exception(f"⚠ Error shutting down MT5: {e}")
+            logger.exception(f"⚠ Error shutting down MT5: {e}")

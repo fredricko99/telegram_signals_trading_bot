@@ -6,35 +6,34 @@ from dotenv import load_dotenv
 from src.tlgm_handler import TelegramHandler
 from src.trade_executor import Trade_Executor 
 
+#import settings
+from config.settings import load_settings
+
 #set up the logger
 from config.logging_config import setup_logging
-setup_logging()
+
 
 async def main():
     # Load environment variables from .env file
     load_dotenv()
+    #load logging setup
+    setup_logging()
+    settings = load_settings()
 
     # 2. Get secrets/config
-    api_id = os.getenv("TELEGRAM_API_ID")
-    api_hash = os.getenv("TELEGRAM_API_HASH")
     session = os.getenv("TELEGRAM_SESSION")
     
-    mt5_account = os.getenv('MT5_A')
-    mt5_password = os.getenv('MT5_A_PASSWORD')
-    mt5_server = os.getenv('MT5_A_SERVER')
-    mt5_A_path = os.getenv('MT5_A_PATH')
-    
-    if not (api_id and api_hash):
+    if not (settings.TG_API_ID and settings.TG_API_HASH):
         print("❌ ERROR: TELEGRAM_API_ID or TELEGRAM_API_HASH not found in environment variables.")
         return
 
     # 3. Initialize Core Components (MT5/Trade Executor first)
-    # The TradeExecutor will handle MT5 connection and order sending logic
+    # The TradeExecutor handles MT5 connection and order sending logic
     executor = Trade_Executor(
-        login=int(mt5_account),
-        password=mt5_password,
-        server=mt5_server,
-        path= mt5_A_path
+        login=settings.MT5_LOGIN,
+        password=settings.MT5_PASSWORD,
+        server=settings.MT5_SERVER,
+        path= settings.MT5_PATH
     )
     if not executor.initialize_mt5():
         print("❌ CRITICAL: Could not initialize MetaTrader 5 connection. Exiting.")
@@ -42,8 +41,8 @@ async def main():
     
     # 4. Initialize Bot Handler
     handler = TelegramHandler(
-        api_id=int(api_id),
-        api_hash=api_hash,
+        api_id=settings.TG_API_ID,
+        api_hash=settings.TG_API_HASH,
         #channels=CHANNELS,
         session_name=session,
         executor=executor

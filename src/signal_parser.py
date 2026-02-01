@@ -1,5 +1,10 @@
-import re
+import re #importing regex
 import json
+import logging
+
+#initialize the logger
+logger = logging.getLogger('PARSER')
+
 
 class SignalParser:
     '''Parses the telegram text message and extracts the necessary information

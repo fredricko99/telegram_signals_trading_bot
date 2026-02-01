@@ -47,12 +47,14 @@ class TelegramHandler:
                 data = json.load(f)
                 channels = data.get("channels", [])
                 print(f"📌 Loaded {len(channels)} channel(s) from JSON.")
-                logger.info(f"📌 Loaded {len(channels)} channel(s) from JSON.")
+                logger.info(f"📌 Loaded {len(channels)} channel(s) from JSON : {channels}.")
                 return channels
         except FileNotFoundError:
             print(f"❌ channel file not found: {self.channels_path}")
+            logger.error(f"❌ channel file not found: {self.channels_path}")
         except json.JSONDecodeError:
             print(f"❌ JSON format error in: {self.channels_path}")
+            logger.error(f"❌ JSON format error in: {self.channels_path}")
         except Exception as e:
             print(f"❌ Unexpected error loading channels: {e}")
 
@@ -72,10 +74,10 @@ class TelegramHandler:
 
         if parsed and parsed.get("symbol") and parsed.get("action"):
                     print("📌 Parsed Signal:")
-                    logger.info(' Parsed Signal...')
+                    logger.info(f' Parsed Signal {parsed}')
                     print(json.dumps(parsed, indent=4))
                     
-                    # 🟢 NEW: Trigger the Trade_Executor
+                    #  NEW: Trigger the Trade_Executor
                     if self.executor:
                         print(">>> 🚀 Passing signal to Trade Executor...")
                         # The executor handles retrieving the price and sending the order

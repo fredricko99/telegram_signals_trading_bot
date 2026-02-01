@@ -7,6 +7,8 @@ os.makedirs(LOG_DIR, exist_ok=True)
 
 LOG_FORMAT = "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
 
+
+#helper function to select the logger and get the corresponding log file
 def _rotating_handler(filename, level=logging.INFO):
     handler = RotatingFileHandler(
         os.path.join(LOG_DIR, filename),
@@ -20,6 +22,7 @@ def _rotating_handler(filename, level=logging.INFO):
 
 
 def setup_logging():
+    '''function that sets up logging  of different modules.'''
     # Root logger (app-wide)
     root = logging.getLogger()
     root.setLevel(logging.INFO)
@@ -43,3 +46,9 @@ def setup_logging():
     executor_logger = logging.getLogger("EXECUTOR")
     executor_logger.addHandler(_rotating_handler("executor.log"))
     executor_logger.propagate = False
+    
+    #risk management logger
+    executor_logger = logging.getLogger("RISK_MANAGEMENT")
+    executor_logger.addHandler(_rotating_handler("risk_manager.log"))
+    executor_logger.propagate = False
+

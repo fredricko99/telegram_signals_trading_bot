@@ -165,7 +165,7 @@ class Trade_Executor:
                     "type_time": mt5.ORDER_TIME_GTC,
                     # FIX: Changed from IOC to FOK (Fill or Kill) for market execution reliability
                     "type_filling": mt5.ORDER_FILLING_FOK, 
-                    "comment": "python-open-position"
+                    "comment": "open-position"
                 }
 
         logger.info(f"📤 Sending order request: {request}")

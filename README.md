@@ -4,13 +4,11 @@ Automated trading system that listens to Telegram signal channels, parses tradin
 
     Listen to multiple Telegram signal channels
 
-    Signal recognition & parsing (multi-language ready)
+    Signal recognition & parsing
 
     Risk management ( TP splitting)
 
     Automated trade execution (MT5 / FXBlue)
-
-    FXBlue performance analytics (iframe / API)
 
     Structured logging per module
 
@@ -55,7 +53,7 @@ Python version: 3.11.4
         MT5_LOGIN=12345678
         MT5_PASSWORD=your_password
         MT5_SERVER=Broker-Server
-        MT5_PATH=C:\Program Files\MetaTrader 5\terminal64.exe
+        MT5_PATH=your mt5 path
     
     Telegram channels config:
         channels list are in config/channels.json

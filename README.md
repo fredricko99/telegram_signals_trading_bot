@@ -59,6 +59,14 @@ Python version: 3.11.4
     
     Telegram channels config:
         channels list are in config/channels.json
+        bot  will listens to any messages that are within the list 'CHANNELS'
+
+    Logging settings
+        loggin file: config/logging_config.py
+
+    settings.py
+        contains importation of all environment variables.
+
 
 
 **LOGGING**

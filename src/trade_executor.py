@@ -99,9 +99,9 @@ class Trade_Executor:
         """
         symbol = parsed_signal.get("symbol")
         action = parsed_signal.get("action")
-        # NOTE: You MUST calculate or fetch the lot size from your risk management settings
+        # NOTE: MUST calculate or fetch the lot size from your risk management settings
         #TODO: calculate the risk management. 
-        qty = 0.01  # LOW LOT EXAMPLE: Replace with your calculated lot size
+        qty = 0.01  # LOW LOT EXAMPLE: TODO: Replace with your calculated lot size
         sl = parsed_signal.get("stop_loss", 0.0)
         tp = parsed_signal.get("take_profit_1", 0.0) # Assuming TP1 is the entry TP
         
@@ -127,12 +127,8 @@ class Trade_Executor:
             logger.error(f"⚠️ Unsupported action: {action}")
             return {"status": "error", "msg": f"Unsupported action: {action}"}
 
-        # 3. Adjust Filling Mode (Recommended Fix)
-        # The 'ORDER_FILLING_IOC' in your create_order often causes errors.
-        # Change the filling mode to FOK or RETURN for better compatibility.
-        # NOTE: You must update the create_order method's default filling type.
         
-        # 4. Execute Order
+        # Execute Order
         # The create_order method is called with all the necessary parameters
         return self.create_order(symbol, qty, order_type, price, sl, tp)
     # ---------------------------------------------------------
@@ -163,7 +159,6 @@ class Trade_Executor:
                     "tp": tp,
                     "magic": self.magic,
                     "type_time": mt5.ORDER_TIME_GTC,
-                    # FIX: Changed from IOC to FOK (Fill or Kill) for market execution reliability
                     "type_filling": mt5.ORDER_FILLING_FOK, 
                     "comment": "open-position"
                 }

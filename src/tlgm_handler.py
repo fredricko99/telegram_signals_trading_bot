@@ -12,6 +12,10 @@ logger = logging.getLogger('TELEGRAM_HANDLER')
 load_dotenv()
 
 class TelegramHandler:
+    '''
+    conncects to the telegram channels, gets the telegram signals and
+    passes the the signals to the trade executor. 
+    '''
     def __init__(self, api_id, api_hash, session_name, executor, channels=None, channels_path="config/channels.json"):
         self.api_id = api_id
         self.api_hash = api_hash

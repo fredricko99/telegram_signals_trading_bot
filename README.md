@@ -15,6 +15,7 @@ Automated trading system that listens to Telegram signal channels, parses tradin
 Python version: 3.11.4
 
 **FILE STURCTURE**
+
         telegram_signals_trading_bot/
         │
         ├── main.py
@@ -45,7 +46,8 @@ Python version: 3.11.4
         │   └── execution/
 
 
-**CONFIGURATIONS:**
+**CONFIGURATIONS**
+
     env config:
         TELEGRAM_API_ID=123456
         TELEGRAM_API_HASH=your_api_hash
